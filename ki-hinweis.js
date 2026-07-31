@@ -8,7 +8,9 @@
    Die Fotos sind KI-erzeugt, Text und Grafik werden per Programm darüber
    gezeichnet - laut IPTC ist das "compositeWithTrainedAlgorithmicMedia". */
 
-const KI_HINWEIS = 'Bild mit KI erstellt';
+/* Wortlaut absichtlich vollständig ausgeschrieben statt "KI-Bild" - der Satz
+   steht so im Bild, in den Metadaten und in der Bildunterschrift. */
+const KI_HINWEIS = 'Dieses Bild wurde mit künstlicher Intelligenz erzeugt';
 
 const XMP_KOMPOSIT = `<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/">

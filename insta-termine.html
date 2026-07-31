@@ -138,7 +138,7 @@
     </div>
 
     <p class="zurueck"><a href="index.html"><i class="fas fa-arrow-left"></i> zurück zur Startseite</a></p>
-    <p class="zurueck">Das Bildmaterial wurde mit KI erstellt. Der Hinweis steht im Bild und in den Metadaten.</p>
+    <p class="zurueck">Das Bildmaterial wurde mit künstlicher Intelligenz erzeugt. Der Hinweis steht im Bild und in den Metadaten.</p>
 
 <!-- Notfall-Kopie der Termine, damit die Seite auch per Doppelklick (file://) funktioniert -->
 <script src="termine.js"></script>
@@ -511,7 +511,7 @@ function zeichneBild(format) {
 function baueCaption() {
     if (gruppen.length === 0) {
         return 'Aktuell haben wir keine Termine geplant – neue Termine folgen in Kürze! 🍦\n\n'
-             + 'Hinweis: ' + KI_HINWEIS + '.\n\n#eisbeilobbes #eisbuddy';
+             + KI_HINWEIS + '.\n\n#eisbeilobbes #eisbuddy';
     }
     const zeilen = gruppen.map(g => {
         const einTag = g.von.getTime() === g.bis.getTime();
@@ -528,7 +528,7 @@ function baueCaption() {
         '',
         'Handgemachtes Eis eigener Herstellung – wir freuen uns auf euch!',
         '',
-        'Hinweis: ' + KI_HINWEIS + '.',
+        KI_HINWEIS + '.',
         '',
         '#eisbeilobbes #eisbuddy #handgemachtesEis #Eiszeit #Tangerhütte #mobileEisdiele'
     ].join('\n');
