@@ -184,17 +184,7 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .termin-item:hover, .termin-item:focus-visible {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.10);
-            outline: none;
-        }
-        .termin-item:hover .termin-share, .termin-item:focus-visible .termin-share { color: var(--primary-red); }
-        .termin-share { color: #c8b6a6; font-size: 1rem; flex-shrink: 0; transition: color 0.2s ease; }
-        .termine-hinweis { text-align: center; font-size: 0.8rem; color: #8d6e63; margin: 12px 0 0 0; }
         .termin-datum {
             background-color: var(--primary-red);
             color: white;
@@ -211,109 +201,6 @@
         .termin-info .ort { font-weight: bold; color: var(--dark-brown); }
         .termin-info .zeit { color: #6d4c41; font-size: 0.9rem; }
         .termine-leer { text-align: center; color: #8d6e63; font-style: italic; padding: 10px; }
-
-        /* ---- Share-Ansicht für Instagram / Facebook ---- */
-        .share-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(62,39,35,0.75);
-            z-index: 100;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .share-overlay.aktiv { display: flex; }
-
-        .share-box {
-            background-color: var(--white-card);
-            border-radius: 22px;
-            width: 100%;
-            max-width: 440px;
-            padding: 22px 20px 20px 20px;
-            position: relative;
-            max-height: calc(100vh - 40px);
-            overflow-y: auto;
-            text-align: center;
-        }
-        .share-box h3 {
-            font-family: 'Georgia', serif;
-            font-style: italic;
-            color: var(--primary-red);
-            font-size: 1.3rem;
-            margin: 0 0 14px 0;
-        }
-        .share-close {
-            position: absolute;
-            top: 12px;
-            right: 14px;
-            background: none;
-            border: none;
-            font-size: 1.4rem;
-            line-height: 1;
-            color: #a1887f;
-            cursor: pointer;
-            padding: 4px 8px;
-        }
-        .share-close:hover { color: var(--primary-red); }
-
-        .format-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; }
-        .format-tab {
-            border: 1px solid #f0e6d2;
-            background-color: var(--cream-bg);
-            color: #6d4c41;
-            border-radius: 50px;
-            padding: 8px 18px;
-            font-size: 0.82rem;
-            font-weight: bold;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .format-tab.aktiv { background-color: var(--primary-red); border-color: var(--primary-red); color: #fff; }
-
-        #share-canvas {
-            max-width: 100%;
-            max-height: 46vh;
-            width: auto;
-            height: auto;
-            border-radius: 14px;
-            display: block;
-            margin: 0 auto;
-            background-color: var(--pastel-peach);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        }
-
-        .share-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-        .share-actions .btn {
-            min-width: 0;
-            flex: 1 1 120px;
-            padding: 12px 14px;
-            font-size: 0.85rem;
-            border: none;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .btn-outline {
-            background-color: var(--cream-bg);
-            color: #6d4c41;
-            border: 1px solid #f0e6d2 !important;
-        }
-        .share-caption {
-            width: 100%;
-            box-sizing: border-box;
-            margin-top: 14px;
-            border: 1px solid #f0e6d2;
-            border-radius: 12px;
-            background-color: var(--cream-bg);
-            padding: 12px;
-            font-family: inherit;
-            font-size: 0.85rem;
-            color: #5d4037;
-            line-height: 1.5;
-            resize: vertical;
-            min-height: 130px;
-        }
-        .share-status { font-size: 0.8rem; color: #6d4c41; margin: 10px 0 0 0; min-height: 1.2em; }
 
         footer {
             margin-top: 60px;
@@ -383,38 +270,11 @@
         </div>
     </div>
 
-    <div class="share-overlay" id="share-overlay" role="dialog" aria-modal="true" aria-labelledby="share-titel">
-        <div class="share-box">
-            <button class="share-close" id="share-close" aria-label="Schließen">&times;</button>
-            <h3 id="share-titel">Für Social Media</h3>
-
-            <div class="format-tabs">
-                <button class="format-tab aktiv" data-format="story">Story 9:16</button>
-                <button class="format-tab" data-format="post">Beitrag 1:1</button>
-            </div>
-
-            <canvas id="share-canvas" width="1080" height="1920"></canvas>
-
-            <div class="share-actions">
-                <button class="btn btn-red" id="share-download"><i class="fas fa-download"></i> Bild</button>
-                <button class="btn btn-insta" id="share-share" hidden><i class="fas fa-share-alt"></i> Teilen</button>
-                <button class="btn btn-outline" id="share-copy"><i class="far fa-copy"></i> Text</button>
-            </div>
-
-            <textarea class="share-caption" id="share-caption" rows="7" spellcheck="false"></textarea>
-            <p class="share-status" id="share-status"></p>
-        </div>
-    </div>
-
     <!-- Notfall-Kopie der Termine, damit die Seite auch per Doppelklick (file://) funktioniert -->
     <script src="termine.js"></script>
-    <!-- Kennzeichnung der KI-Bilder -->
-    <script src="ki-hinweis.js"></script>
 
     <script>
         const MONATE = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-        const MONATE_LANG = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-        const WOCHENTAGE = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
 
         function parseCSV(text) {
             const lines = text.trim().split(/\r?\n/).filter(l => l && !l.startsWith('#'));
@@ -432,8 +292,6 @@
                 ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
         }
 
-        let kommendeTermine = [];
-
         function renderTermine(termine) {
             const container = document.getElementById('termine-liste');
             const titel = document.getElementById('termine-titel');
@@ -444,8 +302,6 @@
                 .filter(t => t.datum && new Date(t.datum) >= heute)
                 .sort((a, b) => new Date(a.datum) - new Date(b.datum));
 
-            kommendeTermine = kommend;
-
             // Überschrift folgt der Anzahl: 1 Termin -> Singular
             titel.innerHTML = '<i class="fas fa-calendar-day"></i> ' +
                 (kommend.length === 1 ? 'Nächster Termin' : 'Nächste Termine');
@@ -455,11 +311,10 @@
                 return;
             }
 
-            container.innerHTML = kommend.map((t, i) => {
+            container.innerHTML = kommend.map(t => {
                 const d = new Date(t.datum);
                 return `
-                    <div class="termin-item" data-index="${i}" role="button" tabindex="0"
-                         title="Für Instagram / Facebook aufbereiten">
+                    <div class="termin-item">
                         <div class="termin-datum">
                             <span class="tag">${d.getDate()}</span>
                             <span class="monat">${MONATE[d.getMonth()]}</span>
@@ -469,21 +324,9 @@
                             ${t.beschreibung ? `<div>${escapeHtml(t.beschreibung)}</div>` : ''}
                             ${t.uhrzeit ? `<div class="zeit"><i class="far fa-clock"></i> ${escapeHtml(t.uhrzeit)}</div>` : ''}
                         </div>
-                        <i class="fas fa-share-alt termin-share" aria-hidden="true"></i>
                     </div>
                 `;
-            }).join('') +
-            `<p class="termine-hinweis">Tippe auf einen Termin für ein fertiges Bild für Story &amp; Beitrag.</p>`;
-
-            container.querySelectorAll('.termin-item').forEach(el => {
-                el.addEventListener('click', () => oeffneShare(+el.dataset.index));
-                el.addEventListener('keydown', e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        oeffneShare(+el.dataset.index);
-                    }
-                });
-            });
+            }).join('');
         }
 
         /* termine.csv ist die Quelle. Per file:// blockiert der Browser fetch(),
@@ -504,378 +347,6 @@
             });
     </script>
 
-    <script>
-        /* ============================================================
-           Share-Ansicht: erzeugt aus einem Termin ein fertiges Bild
-           (Instagram Story 9:16 / Beitrag 1:1) inkl. Caption-Text.
-           ============================================================ */
-        const overlay   = document.getElementById('share-overlay');
-        const canvas    = document.getElementById('share-canvas');
-        const caption   = document.getElementById('share-caption');
-        const status    = document.getElementById('share-status');
-        const btnShare  = document.getElementById('share-share');
-
-        let aktuellerTermin = null;
-        let aktuellesFormat = 'story';
-        const bilder = { foto: null, logo: null };
-
-        function ladeBild(src) {
-            return new Promise(resolve => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = () => resolve(null);
-                img.src = src;
-            });
-        }
-
-        const bilderGeladen = Promise.all([
-            ladeBild('eis-buddy-offen.jpg'),
-            ladeBild('insta-logo-clean.png')
-        ]).then(([foto, logo]) => {
-            bilder.foto = foto;
-            bilder.logo = logo;
-        });
-
-        /* ---------- Canvas-Helfer ---------- */
-
-        function rundesRechteck(ctx, x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.arcTo(x + w, y, x + w, y + h, r);
-            ctx.arcTo(x + w, y + h, x, y + h, r);
-            ctx.arcTo(x, y + h, x, y, r);
-            ctx.arcTo(x, y, x + w, y, r);
-            ctx.closePath();
-        }
-
-        function textGesperrt(ctx, text, cx, y, spacing) {
-            const zeichen = [...text];
-            const breite = zeichen.reduce((s, c) => s + ctx.measureText(c).width + spacing, 0) - spacing;
-            let x = cx - breite / 2;
-            const align = ctx.textAlign;
-            ctx.textAlign = 'left';
-            zeichen.forEach(c => {
-                ctx.fillText(c, x, y);
-                x += ctx.measureText(c).width + spacing;
-            });
-            ctx.textAlign = align;
-        }
-
-        function umbrechen(ctx, text, maxBreite) {
-            const worte = String(text).split(/\s+/);
-            const zeilen = [];
-            let zeile = '';
-            worte.forEach(w => {
-                const test = zeile ? zeile + ' ' + w : w;
-                if (ctx.measureText(test).width > maxBreite && zeile) {
-                    zeilen.push(zeile);
-                    zeile = w;
-                } else {
-                    zeile = test;
-                }
-            });
-            if (zeile) zeilen.push(zeile);
-            return zeilen;
-        }
-
-        function zeichneFoto(ctx, img, W, top, hoehe) {
-            if (!img) return;
-            const off = document.createElement('canvas');
-            off.width = W;
-            off.height = hoehe;
-            const o = off.getContext('2d');
-            const scale = Math.min((W * 0.86) / img.width, hoehe / img.height);
-            const bw = img.width * scale;
-            const bh = img.height * scale;
-            o.drawImage(img, (W - bw) / 2, (hoehe - bh) / 2, bw, bh);
-
-            // weiche Kanten oben/unten wie auf der Website
-            const g = o.createLinearGradient(0, 0, 0, hoehe);
-            g.addColorStop(0, 'rgba(0,0,0,1)');
-            g.addColorStop(0.14, 'rgba(0,0,0,0)');
-            g.addColorStop(0.86, 'rgba(0,0,0,0)');
-            g.addColorStop(1, 'rgba(0,0,0,1)');
-            o.globalCompositeOperation = 'destination-out';
-            o.fillStyle = g;
-            o.fillRect(0, 0, W, hoehe);
-
-            ctx.drawImage(off, 0, top);
-        }
-
-        function zeichneLogo(ctx, img, cx, top, d) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(cx, top + d / 2, d / 2, 0, Math.PI * 2);
-            ctx.fillStyle = '#ffffff';
-            ctx.fill();
-            ctx.clip();
-            if (img) {
-                const scale = Math.min(d / img.width, d / img.height);
-                const bw = img.width * scale;
-                const bh = img.height * scale;
-                ctx.drawImage(img, cx - bw / 2, top + d / 2 - bh / 2, bw, bh);
-            }
-            ctx.restore();
-            ctx.beginPath();
-            ctx.arc(cx, top + d / 2, d / 2, 0, Math.PI * 2);
-            ctx.lineWidth = d * 0.05;
-            ctx.strokeStyle = '#ffffff';
-            ctx.stroke();
-        }
-
-        /* ---------- Layout-Werte je Format ---------- */
-
-        /* Story: alles zwischen y≈140 und y≈1670, damit Instagram
-           mit Profilzeile oben und Antwort-Leiste unten nichts verdeckt. */
-        const LAYOUT = {
-            story: {
-                W: 1080, H: 1920,
-                logo: { d: 180, top: 140 }, titel: 92, titelY: 425,
-                kicker: 30, kickerY: 486,
-                foto: { top: 515, h: 470 },
-                pill: { top: 1010, w: 430, h: 240, r: 40, wtag: 34, tag: 108, monat: 36 },
-                ort: 70, besch: 42, zeit: 48, luftMin: 44, abstand: 26,
-                fussLinie: 1630, fussY: 1700, fuss: 42, kiY: 1752, ki: 30
-            },
-            post: {
-                W: 1080, H: 1080,
-                logo: { d: 110, top: 36 }, titel: 68, titelY: 228,
-                kicker: 24, kickerY: 274,
-                foto: { top: 296, h: 225 },
-                pill: { top: 551, w: 340, h: 168, r: 32, wtag: 26, tag: 76, monat: 28 },
-                ort: 54, besch: 34, zeit: 38, luftMin: 26, abstand: 18,
-                fussLinie: 958, fussY: 1006, fuss: 32, kiY: 1046, ki: 23
-            }
-        };
-
-        function zeichneShareBild(t, format) {
-            const L = LAYOUT[format];
-            const W = L.W, H = L.H, cx = W / 2;
-            canvas.width = W;
-            canvas.height = H;
-            const ctx = canvas.getContext('2d');
-            const d = new Date(t.datum);
-
-            // Hintergrund
-            const bg = ctx.createLinearGradient(0, 0, 0, H);
-            bg.addColorStop(0, '#fcece0');
-            bg.addColorStop(0.55, '#fdfaf0');
-            bg.addColorStop(1, '#fcece0');
-            ctx.fillStyle = bg;
-            ctx.fillRect(0, 0, W, H);
-
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'alphabetic';
-
-            zeichneLogo(ctx, bilder.logo, cx, L.logo.top, L.logo.d);
-
-            ctx.fillStyle = '#d32f2f';
-            ctx.font = `italic bold ${L.titel}px Georgia, serif`;
-            ctx.fillText('Eis bei Lobbes', cx, L.titelY);
-
-            ctx.fillStyle = '#6d4c41';
-            ctx.font = `bold ${L.kicker}px 'Helvetica Neue', Arial, sans-serif`;
-            textGesperrt(ctx, 'WIR SIND UNTERWEGS', cx, L.kickerY, L.kicker * 0.22);
-
-            zeichneFoto(ctx, bilder.foto, W, L.foto.top, L.foto.h);
-
-            // Datums-Pille
-            const p = L.pill;
-            ctx.fillStyle = '#d32f2f';
-            rundesRechteck(ctx, cx - p.w / 2, p.top, p.w, p.h, p.r);
-            ctx.fill();
-            ctx.fillStyle = '#ffffff';
-            ctx.font = `bold ${p.wtag}px 'Helvetica Neue', Arial, sans-serif`;
-            textGesperrt(ctx, WOCHENTAGE[d.getDay()].toUpperCase(), cx, p.top + p.h * 0.25, p.wtag * 0.18);
-            ctx.font = `bold ${p.tag}px 'Helvetica Neue', Arial, sans-serif`;
-            ctx.fillText(String(d.getDate()), cx, p.top + p.h * 0.68);
-            ctx.font = `${p.monat}px 'Helvetica Neue', Arial, sans-serif`;
-            ctx.fillText(`${MONATE_LANG[d.getMonth()]} ${d.getFullYear()}`, cx, p.top + p.h * 0.90);
-
-            // Ort / Beschreibung / Uhrzeit als Block, mittig im freien Raum
-            const maxB = W * 0.82;
-            const bloecke = [];
-
-            // Ort: Schrift verkleinern, bis er in maximal zwei Zeilen passt
-            let ortGroesse = L.ort, ortZeilen = [];
-            for (const f of [1, 0.85, 0.72, 0.6]) {
-                ortGroesse = Math.round(L.ort * f);
-                ctx.font = `bold ${ortGroesse}px 'Helvetica Neue', Arial, sans-serif`;
-                ortZeilen = umbrechen(ctx, t.ort || '', maxB);
-                if (ortZeilen.length <= 2) break;
-            }
-            bloecke.push({ zeilen: ortZeilen, groesse: ortGroesse, stil: 'bold', farbe: '#3e2723', lh: 1.24 });
-
-            if (t.beschreibung) {
-                ctx.font = `italic ${L.besch}px 'Helvetica Neue', Arial, sans-serif`;
-                bloecke.push({
-                    zeilen: umbrechen(ctx, t.beschreibung, maxB),
-                    groesse: L.besch, stil: 'italic', farbe: '#6d4c41', lh: 1.32
-                });
-            }
-
-            bloecke.push({
-                zeilen: [t.uhrzeit ? `ab ${t.uhrzeit} Uhr` : 'den ganzen Tag'],
-                groesse: L.zeit, stil: 'bold', farbe: '#5d4037', lh: 1.3
-            });
-
-            const platz = L.fussLinie - (p.top + p.h) - L.luftMin;
-            const hoehe = bloecke.reduce((s, b) => s + b.zeilen.length * b.groesse * b.lh, 0) +
-                          L.abstand * (bloecke.length - 1);
-            const eng = Math.min(1, platz / hoehe);   // Notbremse bei sehr viel Text
-
-            let y = p.top + p.h + L.luftMin + (platz - hoehe * eng) / 2;
-            bloecke.forEach((b, i) => {
-                const g = Math.round(b.groesse * eng);
-                const zh = g * b.lh;
-                ctx.font = `${b.stil} ${g}px 'Helvetica Neue', Arial, sans-serif`;
-                ctx.fillStyle = b.farbe;
-                b.zeilen.forEach(z => {
-                    ctx.fillText(z, cx, y + zh * 0.76);
-                    y += zh;
-                });
-                if (i < bloecke.length - 1) y += L.abstand * eng;
-            });
-
-            // Fußzeile
-            ctx.strokeStyle = '#f0e6d2';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(W * 0.18, L.fussLinie);
-            ctx.lineTo(W * 0.82, L.fussLinie);
-            ctx.stroke();
-
-            ctx.fillStyle = '#8d6e63';
-            ctx.font = `bold ${L.fuss}px 'Helvetica Neue', Arial, sans-serif`;
-            ctx.fillText('@eis.bei.lobbes  ·  Handgemachtes Eis', cx, L.fussY);
-
-            // Pflichtangabe zum KI-Bild (EU-KI-Verordnung ab 02.08.2026)
-            ctx.fillStyle = '#a1887f';
-            ctx.font = `${L.ki}px 'Helvetica Neue', Arial, sans-serif`;
-            ctx.fillText(KI_HINWEIS, cx, L.kiY);
-        }
-
-        /* ---------- Caption ---------- */
-
-        function baueCaption(t) {
-            const d = new Date(t.datum);
-            const datum = `${WOCHENTAGE[d.getDay()]}, ${d.getDate()}. ${MONATE_LANG[d.getMonth()]} ${d.getFullYear()}`;
-            const zeit = t.uhrzeit ? `🕐 ab ${t.uhrzeit} Uhr` : '🕐 den ganzen Tag';
-            const ortWort = (t.ort || '').split(/\s+/).pop().replace(/[^A-Za-zÄÖÜäöüß]/g, '');
-            const tags = ['#eisbeilobbes', '#eisbuddy', '#handgemachtesEis', '#Eiszeit', '#Tangerhütte'];
-            if (ortWort && !tags.some(x => x.toLowerCase() === '#' + ortWort.toLowerCase())) {
-                tags.push('#' + ortWort);
-            }
-            return [
-                '🍦 Unser Eis Buddy ist unterwegs!',
-                '',
-                '📅 ' + datum,
-                zeit,
-                '📍 ' + (t.ort || ''),
-                t.beschreibung ? 'ℹ️ ' + t.beschreibung : '',
-                '',
-                'Handgemachtes Eis eigener Herstellung – wir freuen uns auf euch!',
-                '',
-                KI_HINWEIS + '.',
-                '',
-                tags.join(' ')
-            ].filter(z => z !== '').join('\n');
-        }
-
-        function dateiname() {
-            const d = new Date(aktuellerTermin.datum);
-            const datum = d.toISOString().slice(0, 10);
-            const ort = (aktuellerTermin.ort || 'termin')
-                .toLowerCase()
-                .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
-                .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-            return `eis-bei-lobbes_${datum}_${ort}_${aktuellesFormat}.png`;
-        }
-
-        /* ---------- Steuerung ---------- */
-
-        async function oeffneShare(index) {
-            aktuellerTermin = kommendeTermine[index];
-            if (!aktuellerTermin) return;
-            aktuellesFormat = 'story';
-            document.querySelectorAll('.format-tab').forEach(b =>
-                b.classList.toggle('aktiv', b.dataset.format === 'story'));
-            caption.value = baueCaption(aktuellerTermin);
-            // Per file:// darf der Browser das Bild nicht aus dem Canvas lesen
-            status.textContent = location.protocol === 'file:'
-                ? 'Hinweis: Speichern klappt nur online bzw. über einen Webserver.'
-                : '';
-            overlay.classList.add('aktiv');
-            document.body.style.overflow = 'hidden';
-            await bilderGeladen;
-            zeichneShareBild(aktuellerTermin, aktuellesFormat);
-            btnShare.hidden = !(navigator.share && navigator.canShare);
-        }
-
-        function schliesseShare() {
-            overlay.classList.remove('aktiv');
-            document.body.style.overflow = '';
-        }
-
-        document.getElementById('share-close').addEventListener('click', schliesseShare);
-        overlay.addEventListener('click', e => { if (e.target === overlay) schliesseShare(); });
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && overlay.classList.contains('aktiv')) schliesseShare();
-        });
-
-        document.querySelectorAll('.format-tab').forEach(btn => {
-            btn.addEventListener('click', () => {
-                aktuellesFormat = btn.dataset.format;
-                document.querySelectorAll('.format-tab').forEach(b =>
-                    b.classList.toggle('aktiv', b === btn));
-                zeichneShareBild(aktuellerTermin, aktuellesFormat);
-            });
-        });
-
-        function holeBlob() {
-            return pngMitKennzeichnung(canvas);   // aus ki-hinweis.js
-        }
-
-        document.getElementById('share-download').addEventListener('click', async () => {
-            try {
-                const blob = await holeBlob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = dateiname();
-                a.click();
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
-                status.textContent = 'Bild gespeichert ✓';
-            } catch (err) {
-                status.textContent = 'Bild konnte nicht erzeugt werden – bitte Screenshot nutzen.';
-            }
-        });
-
-        document.getElementById('share-share').addEventListener('click', async () => {
-            try {
-                const blob = await holeBlob();
-                const datei = new File([blob], dateiname(), { type: 'image/png' });
-                if (navigator.canShare && navigator.canShare({ files: [datei] })) {
-                    await navigator.share({ files: [datei], text: caption.value });
-                    status.textContent = '';
-                } else {
-                    status.textContent = 'Teilen wird hier nicht unterstützt – bitte Bild speichern.';
-                }
-            } catch (err) {
-                if (err && err.name !== 'AbortError') status.textContent = 'Teilen abgebrochen.';
-            }
-        });
-
-        document.getElementById('share-copy').addEventListener('click', async () => {
-            try {
-                await navigator.clipboard.writeText(caption.value);
-            } catch (err) {
-                caption.select();
-                document.execCommand('copy');
-            }
-            status.textContent = 'Text kopiert ✓';
-        });
-    </script>
 
     <footer>
         <p>

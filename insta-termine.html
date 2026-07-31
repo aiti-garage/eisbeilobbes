@@ -48,6 +48,34 @@
 
     .hinweis { color: #6d4c41; font-size: 0.9rem; line-height: 1.5; margin-bottom: 18px; }
 
+    .auswahl-zeile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        text-align: left;
+    }
+    .auswahl-zeile span {
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6d4c41;
+        flex-shrink: 0;
+    }
+    .auswahl-zeile select {
+        flex: 1;
+        min-width: 0;
+        padding: 11px 12px;
+        border: 1px solid #f0e6d2;
+        border-radius: 12px;
+        background-color: var(--cream-bg);
+        color: var(--dark-brown);
+        font-family: inherit;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
     .format-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
     .format-tab {
         border: 1px solid #f0e6d2;
@@ -117,8 +145,13 @@
 <body>
 
     <div class="werkzeug">
-        <h1>Termin-Übersicht</h1>
+        <h1>Bilder für Social Media</h1>
         <p class="hinweis" id="hinweis">Termine werden geladen …</p>
+
+        <label class="auswahl-zeile">
+            <span>Motiv</span>
+            <select id="auswahl"><option value="alle">Alle Termine (Übersicht)</option></select>
+        </label>
 
         <div class="format-tabs">
             <button class="format-tab aktiv" data-format="post">Beitrag 1:1</button>
@@ -148,14 +181,17 @@
 <script>
 const MONATE = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
 const MONATE_LANG = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const WOCHENTAGE = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
 
 const canvas  = document.getElementById('vorschau');
 const hinweis = document.getElementById('hinweis');
 const caption = document.getElementById('caption');
 const status  = document.getElementById('status');
+const auswahl = document.getElementById('auswahl');
 const btnTeilen = document.getElementById('btn-teilen');
 
-let gruppen = [];               // zusammengefasste, kommende Termine
+let einzeltermine = [];         // kommende Termine, jede CSV-Zeile einzeln
+let gruppen = [];               // dieselben Termine, mehrtägige zusammengefasst
 let aktuellesFormat = 'post';
 const bilder = { foto: null, logo: null };
 
@@ -262,6 +298,25 @@ function zeichneGesperrt(ctx, text, cx, y, spacing) {
     ctx.textAlign = align;
 }
 
+/* Text auf mehrere Zeilen verteilen (für das Einzeltermin-Bild) */
+function umbrechen(ctx, text, maxBreite) {
+    const worte = String(text).split(/\s+/);
+    const zeilen = [];
+    let zeile = '';
+    worte.forEach(w => {
+        const test = zeile ? zeile + ' ' + w : w;
+        if (ctx.measureText(test).width > maxBreite && zeile) {
+            zeilen.push(zeile);
+            zeile = w;
+        } else {
+            zeile = test;
+        }
+    });
+    if (zeile) zeilen.push(zeile);
+    return zeilen;
+}
+
+/* Text mit … abschneiden (für die Zeilen der Übersicht) */
 function kuerzen(ctx, text, maxBreite) {
     if (ctx.measureText(text).width <= maxBreite) return text;
     let t = text;
@@ -299,6 +354,31 @@ function zeichneFoto(ctx, img, x, y, w, h) {
     o.fillRect(0, 0, w, h);
 
     ctx.drawImage(off, x, y);
+}
+
+/* Foto vollständig einpassen (nichts abschneiden) mit weichen Kanten -
+   für das Einzeltermin-Bild, wo das Foto frei auf dem Hintergrund liegt. */
+function zeichneFotoEinpassen(ctx, img, W, top, hoehe) {
+    if (!img) return;
+    const off = document.createElement('canvas');
+    off.width = W;
+    off.height = hoehe;
+    const o = off.getContext('2d');
+    const scale = Math.min((W * 0.86) / img.width, hoehe / img.height);
+    const bw = img.width * scale;
+    const bh = img.height * scale;
+    o.drawImage(img, (W - bw) / 2, (hoehe - bh) / 2, bw, bh);
+
+    const g = o.createLinearGradient(0, 0, 0, hoehe);
+    g.addColorStop(0, 'rgba(0,0,0,1)');
+    g.addColorStop(0.14, 'rgba(0,0,0,0)');
+    g.addColorStop(0.86, 'rgba(0,0,0,0)');
+    g.addColorStop(1, 'rgba(0,0,0,1)');
+    o.globalCompositeOperation = 'destination-out';
+    o.fillStyle = g;
+    o.fillRect(0, 0, W, hoehe);
+
+    ctx.drawImage(off, 0, top);
 }
 
 function zeichneLogo(ctx, img, cx, cy, d) {
@@ -506,7 +586,164 @@ function zeichneBild(format) {
     return { gezeigt: sichtbar.length, rest };
 }
 
+/* ---------------- Einzelner Termin als Bild ---------------- */
+
+/* Story: alles zwischen y≈140 und y≈1670, damit Instagram mit Profilzeile
+   oben und Antwort-Leiste unten nichts verdeckt. */
+const EINZEL = {
+    story: {
+        W: 1080, H: 1920,
+        logo: { d: 180, top: 140 }, titel: 92, titelY: 425,
+        kicker: 30, kickerY: 486,
+        foto: { top: 515, h: 470 },
+        pill: { top: 1010, w: 430, h: 240, r: 40, wtag: 34, tag: 108, monat: 36 },
+        ort: 70, besch: 42, zeit: 48, luftMin: 44, abstand: 26,
+        fussLinie: 1630, fussY: 1700, fuss: 42, kiY: 1752, ki: 30
+    },
+    post: {
+        W: 1080, H: 1080,
+        logo: { d: 110, top: 36 }, titel: 68, titelY: 228,
+        kicker: 24, kickerY: 274,
+        foto: { top: 296, h: 225 },
+        pill: { top: 551, w: 340, h: 168, r: 32, wtag: 26, tag: 76, monat: 28 },
+        ort: 54, besch: 34, zeit: 38, luftMin: 26, abstand: 18,
+        fussLinie: 958, fussY: 1006, fuss: 32, kiY: 1046, ki: 23
+    }
+};
+
+function zeichneEinzelBild(t, format) {
+    const L = EINZEL[format];
+    const W = L.W, H = L.H, cx = W / 2;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    const d = new Date(t.datum);
+
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#fcece0');
+    bg.addColorStop(0.55, '#fdfaf0');
+    bg.addColorStop(1, '#fcece0');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+
+    zeichneLogo(ctx, bilder.logo, cx, L.logo.top + L.logo.d / 2, L.logo.d);
+
+    ctx.fillStyle = '#d32f2f';
+    ctx.font = `italic bold ${L.titel}px Georgia, serif`;
+    ctx.fillText('Eis bei Lobbes', cx, L.titelY);
+
+    ctx.fillStyle = '#6d4c41';
+    ctx.font = `bold ${L.kicker}px 'Helvetica Neue', Arial, sans-serif`;
+    zeichneGesperrt(ctx, 'WIR SIND UNTERWEGS', cx, L.kickerY, L.kicker * 0.22);
+
+    zeichneFotoEinpassen(ctx, bilder.foto, W, L.foto.top, L.foto.h);
+
+    // Datums-Pille
+    const p = L.pill;
+    ctx.fillStyle = '#d32f2f';
+    rundesRechteck(ctx, cx - p.w / 2, p.top, p.w, p.h, p.r);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${p.wtag}px 'Helvetica Neue', Arial, sans-serif`;
+    zeichneGesperrt(ctx, WOCHENTAGE[d.getDay()].toUpperCase(), cx, p.top + p.h * 0.25, p.wtag * 0.18);
+    ctx.font = `bold ${p.tag}px 'Helvetica Neue', Arial, sans-serif`;
+    ctx.fillText(String(d.getDate()), cx, p.top + p.h * 0.68);
+    ctx.font = `${p.monat}px 'Helvetica Neue', Arial, sans-serif`;
+    ctx.fillText(`${MONATE_LANG[d.getMonth()]} ${d.getFullYear()}`, cx, p.top + p.h * 0.90);
+
+    // Ort / Beschreibung / Uhrzeit als Block, mittig im freien Raum
+    const maxB = W * 0.82;
+    const bloecke = [];
+
+    // Ort: Schrift verkleinern, bis er in maximal zwei Zeilen passt
+    let ortGroesse = L.ort, ortZeilen = [];
+    for (const f of [1, 0.85, 0.72, 0.6]) {
+        ortGroesse = Math.round(L.ort * f);
+        ctx.font = `bold ${ortGroesse}px 'Helvetica Neue', Arial, sans-serif`;
+        ortZeilen = umbrechen(ctx, t.ort || '', maxB);
+        if (ortZeilen.length <= 2) break;
+    }
+    bloecke.push({ zeilen: ortZeilen, groesse: ortGroesse, stil: 'bold', farbe: '#3e2723', lh: 1.24 });
+
+    if (t.beschreibung) {
+        ctx.font = `italic ${L.besch}px 'Helvetica Neue', Arial, sans-serif`;
+        bloecke.push({
+            zeilen: umbrechen(ctx, t.beschreibung, maxB),
+            groesse: L.besch, stil: 'italic', farbe: '#6d4c41', lh: 1.32
+        });
+    }
+
+    bloecke.push({
+        zeilen: [t.uhrzeit ? `ab ${t.uhrzeit} Uhr` : 'den ganzen Tag'],
+        groesse: L.zeit, stil: 'bold', farbe: '#5d4037', lh: 1.3
+    });
+
+    const platz = L.fussLinie - (p.top + p.h) - L.luftMin;
+    const hoehe = bloecke.reduce((s, b) => s + b.zeilen.length * b.groesse * b.lh, 0) +
+                  L.abstand * (bloecke.length - 1);
+    const eng = Math.min(1, platz / hoehe);   // Notbremse bei sehr viel Text
+
+    let y = p.top + p.h + L.luftMin + (platz - hoehe * eng) / 2;
+    bloecke.forEach((b, i) => {
+        const g = Math.round(b.groesse * eng);
+        const zh = g * b.lh;
+        ctx.font = `${b.stil} ${g}px 'Helvetica Neue', Arial, sans-serif`;
+        ctx.fillStyle = b.farbe;
+        b.zeilen.forEach(z => {
+            ctx.fillText(z, cx, y + zh * 0.76);
+            y += zh;
+        });
+        if (i < bloecke.length - 1) y += L.abstand * eng;
+    });
+
+    // Fußzeile
+    ctx.strokeStyle = '#f0e6d2';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.18, L.fussLinie);
+    ctx.lineTo(W * 0.82, L.fussLinie);
+    ctx.stroke();
+
+    ctx.fillStyle = '#8d6e63';
+    ctx.font = `bold ${L.fuss}px 'Helvetica Neue', Arial, sans-serif`;
+    ctx.fillText('@eis.bei.lobbes  ·  Handgemachtes Eis', cx, L.fussY);
+
+    // Pflichtangabe zum KI-Bild (EU-KI-Verordnung ab 02.08.2026)
+    ctx.fillStyle = '#a1887f';
+    ctx.font = `${L.ki}px 'Helvetica Neue', Arial, sans-serif`;
+    ctx.fillText(KI_HINWEIS, cx, L.kiY);
+
+    return { gezeigt: 1, rest: 0 };
+}
+
 /* ---------------- Text für die Bildunterschrift ---------------- */
+
+function baueCaptionEinzel(t) {
+    const d = new Date(t.datum);
+    const datum = `${WOCHENTAGE[d.getDay()]}, ${d.getDate()}. ${MONATE_LANG[d.getMonth()]} ${d.getFullYear()}`;
+    const ortWort = (t.ort || '').split(/\s+/).pop().replace(/[^A-Za-zÄÖÜäöüß]/g, '');
+    const tags = ['#eisbeilobbes', '#eisbuddy', '#handgemachtesEis', '#Eiszeit', '#Tangerhütte'];
+    if (ortWort && !tags.some(x => x.toLowerCase() === '#' + ortWort.toLowerCase())) {
+        tags.push('#' + ortWort);
+    }
+    return [
+        '🍦 Unser Eis Buddy ist unterwegs!',
+        '',
+        '📅 ' + datum,
+        t.uhrzeit ? '🕐 ab ' + t.uhrzeit + ' Uhr' : '🕐 den ganzen Tag',
+        '📍 ' + (t.ort || ''),
+        t.beschreibung ? 'ℹ️ ' + t.beschreibung : '',
+        '',
+        'Handgemachtes Eis eigener Herstellung – wir freuen uns auf euch!',
+        '',
+        KI_HINWEIS + '.',
+        '',
+        tags.join(' ')
+    ].filter(z => z !== '').join('\n');
+}
 
 function baueCaption() {
     if (gruppen.length === 0) {
@@ -536,14 +773,50 @@ function baueCaption() {
 
 /* ---------------- Ausgabe / Bedienung ---------------- */
 
+/* null = Übersicht über alle Termine, sonst der gewählte Einzeltermin */
+function gewaehlterTermin() {
+    return auswahl.value === 'alle' ? null : einzeltermine[+auswahl.value];
+}
+
+function alsDateiname(text) {
+    return text.toLowerCase()
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
 function dateiname() {
+    const t = gewaehlterTermin();
+    if (t) {
+        return `eis-bei-lobbes_${t.datum}_${alsDateiname(t.ort || 'termin')}_${aktuellesFormat}.png`;
+    }
     const h = new Date();
     const datum = `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`;
     return `eis-bei-lobbes_termine_${datum}_${aktuellesFormat}.png`;
 }
 
+function fuelleAuswahl() {
+    einzeltermine.forEach((t, i) => {
+        const d = new Date(t.datum);
+        const o = document.createElement('option');
+        o.value = i;
+        o.textContent = `${WOCHENTAGE[d.getDay()].slice(0, 2)}., ${d.getDate()}. ${MONATE[d.getMonth()]} – ${t.ort}`
+                      + (t.beschreibung ? ` (${t.beschreibung})` : '');
+        auswahl.appendChild(o);
+    });
+}
+
 function aktualisiere() {
+    const t = gewaehlterTermin();
+
+    if (t) {
+        zeichneEinzelBild(t, aktuellesFormat);
+        caption.value = baueCaptionEinzel(t);
+        hinweis.textContent = 'Einzelner Termin. Über „Motiv“ wechselst du den Termin oder zur Übersicht.';
+        return;
+    }
+
     const ergebnis = zeichneBild(aktuellesFormat);
+    caption.value = baueCaption();
     if (gruppen.length === 0) {
         hinweis.textContent = 'Aktuell sind keine kommenden Termine in termine.csv eingetragen.';
     } else if (ergebnis.rest > 0) {
@@ -556,6 +829,11 @@ function aktualisiere() {
 function holeBlob() {
     return pngMitKennzeichnung(canvas);   // aus ki-hinweis.js
 }
+
+auswahl.addEventListener('change', () => {
+    status.textContent = '';
+    aktualisiere();
+});
 
 document.querySelectorAll('.format-tab').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -641,12 +919,12 @@ Promise.all([
 
     const heute = new Date();
     heute.setHours(0, 0, 0, 0);
-    const kommend = termine
+    einzeltermine = termine
         .filter(t => t.datum && new Date(t.datum) >= heute)
         .sort((a, b) => new Date(a.datum) - new Date(b.datum));
 
-    gruppen = fasseZusammen(kommend);
-    caption.value = baueCaption();
+    gruppen = fasseZusammen(einzeltermine);
+    fuelleAuswahl();
     btnTeilen.hidden = !(navigator.share && navigator.canShare);
     aktualisiere();
 
