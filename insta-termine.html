@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instagram Termine – Eis bei Lobbes</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+    :root {
+        --cream-bg: #fdfaf0;
+        --pastel-peach: #fcece0;
+        --primary-red: #d32f2f;
+        --dark-brown: #3e2723;
+        --white-card: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        background-color: var(--cream-bg);
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        color: var(--dark-brown);
+        padding: 30px 16px 60px 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    .werkzeug {
+        background-color: var(--white-card);
+        border: 1px solid #f0f0f0;
+        border-radius: 25px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+        padding: 26px 24px 24px 24px;
+        max-width: 560px;
+        width: 100%;
+        text-align: center;
+    }
+
+    h1 {
+        font-family: 'Georgia', serif;
+        font-style: italic;
+        color: var(--primary-red);
+        font-size: 1.9rem;
+        margin-bottom: 6px;
+    }
+
+    .hinweis { color: #6d4c41; font-size: 0.9rem; line-height: 1.5; margin-bottom: 18px; }
+
+    .format-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+    .format-tab {
+        border: 1px solid #f0e6d2;
+        background-color: var(--cream-bg);
+        color: #6d4c41;
+        border-radius: 50px;
+        padding: 9px 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .format-tab.aktiv { background-color: var(--primary-red); border-color: var(--primary-red); color: #fff; }
+
+    #vorschau {
+        max-width: 100%;
+        max-height: 62vh;
+        width: auto;
+        height: auto;
+        border-radius: 14px;
+        display: block;
+        margin: 0 auto;
+        background-color: var(--pastel-peach);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    .aktionen { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .btn {
+        flex: 1 1 130px;
+        padding: 14px 16px;
+        border: none;
+        border-radius: 50px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: #fff;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+    .btn i { margin-right: 8px; }
+    .btn-red { background-color: var(--primary-red); }
+    .btn-insta { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+    .btn-outline { background-color: var(--cream-bg); color: #6d4c41; border: 1px solid #f0e6d2; }
+
+    .caption {
+        width: 100%;
+        margin-top: 16px;
+        border: 1px solid #f0e6d2;
+        border-radius: 12px;
+        background-color: var(--cream-bg);
+        padding: 12px;
+        font-family: inherit;
+        font-size: 0.85rem;
+        color: #5d4037;
+        line-height: 1.5;
+        resize: vertical;
+        min-height: 150px;
+    }
+
+    .status { font-size: 0.82rem; color: #6d4c41; margin-top: 12px; min-height: 1.2em; }
+    .zurueck { margin-top: 22px; font-size: 0.85rem; }
+    .zurueck a { color: #8d6e63; text-decoration: none; }
+    .zurueck a:hover { color: var(--primary-red); }
+</style>
+</head>
+<body>
+
+    <div class="werkzeug">
+        <h1>Termin-Übersicht</h1>
+        <p class="hinweis" id="hinweis">Termine werden geladen …</p>
+
+        <div class="format-tabs">
+            <button class="format-tab aktiv" data-format="post">Beitrag 1:1</button>
+            <button class="format-tab" data-format="story">Story 9:16</button>
+        </div>
+
+        <canvas id="vorschau" width="1080" height="1080"></canvas>
+
+        <div class="aktionen">
+            <button class="btn btn-red" id="btn-bild"><i class="fas fa-download"></i>Bild speichern</button>
+            <button class="btn btn-insta" id="btn-teilen" hidden><i class="fas fa-share-alt"></i>Teilen</button>
+            <button class="btn btn-outline" id="btn-text"><i class="far fa-copy"></i>Text</button>
+        </div>
+
+        <textarea class="caption" id="caption" rows="8" spellcheck="false"></textarea>
+        <p class="status" id="status"></p>
+    </div>
+
+    <p class="zurueck"><a href="index.html"><i class="fas fa-arrow-left"></i> zurück zur Startseite</a></p>
+
+<!-- Notfall-Kopie der Termine, damit die Seite auch per Doppelklick (file://) funktioniert -->
+<script src="termine.js"></script>
+
+<script>
+const MONATE = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const MONATE_LANG = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+const canvas  = document.getElementById('vorschau');
+const hinweis = document.getElementById('hinweis');
+const caption = document.getElementById('caption');
+const status  = document.getElementById('status');
+const btnTeilen = document.getElementById('btn-teilen');
+
+let gruppen = [];               // zusammengefasste, kommende Termine
+let aktuellesFormat = 'post';
+const bilder = { foto: null, logo: null };
+
+const KALENDER_ICON = '\uf783';     // Font Awesome "calendar-day"
+const SYMBOL_FONT = '900 40px "Font Awesome 6 Free"';
+let symbolFontDa = false;           // erst nach dem Laden der Icon-Schrift true
+
+/* ---------------- Daten ---------------- */
+
+function parseCSV(text) {
+    const zeilen = text.trim().split(/\r?\n/).filter(l => l && !l.startsWith('#'));
+    const kopf = zeilen.shift().split(';').map(h => h.trim());
+    return zeilen.map(zeile => {
+        const spalten = zeile.split(';');
+        const o = {};
+        kopf.forEach((h, i) => o[h] = (spalten[i] || '').trim());
+        return o;
+    });
+}
+
+// "Rock unter den Eichen - Tag 1 von 2" -> "Rock unter den Eichen"
+function ohneTagZaehler(text) {
+    return (text || '').replace(/\s*[-–]?\s*Tag\s+\d+\s+von\s+\d+\s*/i, '').trim();
+}
+
+function istFolgetag(a, b) {
+    return (b - a) / 86400000 === 1;
+}
+
+/* Mehrtägige Veranstaltungen am selben Ort zu einem Eintrag zusammenfassen */
+function fasseZusammen(termine) {
+    const gruppen = [];
+    termine.forEach(t => {
+        const d = new Date(t.datum);
+        const letzte = gruppen[gruppen.length - 1];
+        if (letzte && letzte.ort === t.ort && istFolgetag(letzte.bis, d)) {
+            letzte.bis = d;
+            if (!letzte.beschreibung) letzte.beschreibung = ohneTagZaehler(t.beschreibung);
+        } else {
+            gruppen.push({
+                von: d, bis: d,
+                ort: t.ort || '',
+                beschreibung: ohneTagZaehler(t.beschreibung),
+                uhrzeit: t.uhrzeit || ''
+            });
+        }
+    });
+    return gruppen;
+}
+
+function datumsFeld(g) {
+    const einTag = g.von.getTime() === g.bis.getTime();
+    if (einTag) {
+        return { tag: String(g.von.getDate()).padStart(2, '0'), monat: MONATE[g.von.getMonth()], klein: false };
+    }
+    if (g.von.getMonth() === g.bis.getMonth()) {
+        return { tag: `${g.von.getDate()}.–${g.bis.getDate()}.`, monat: MONATE[g.von.getMonth()], klein: true };
+    }
+    return {
+        tag: `${g.von.getDate()}.${g.von.getMonth() + 1}.–${g.bis.getDate()}.${g.bis.getMonth() + 1}.`,
+        monat: '', klein: true
+    };
+}
+
+function infoZeile(g) {
+    const teile = [];
+    if (g.beschreibung) teile.push(g.beschreibung);
+    if (g.uhrzeit) teile.push('ab ' + g.uhrzeit + ' Uhr');
+    return teile.join('  ·  ');
+}
+
+/* ---------------- Canvas-Helfer ---------------- */
+
+function rundesRechteck(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+}
+
+/* Gesperrter Text, mittig um cx. Nutzt ctx.letterSpacing, weil das
+   Zeichen-für-Zeichen-Setzen bei kleinen Abständen unsauber aussieht. */
+function zeichneGesperrt(ctx, text, cx, y, spacing) {
+    const align = ctx.textAlign;
+    if ('letterSpacing' in ctx) {
+        const vorher = ctx.letterSpacing;
+        ctx.letterSpacing = spacing.toFixed(2) + 'px';
+        ctx.textAlign = 'center';
+        ctx.fillText(text, cx + spacing / 2, y);   // Chrome zählt den Abstand hinter dem letzten Zeichen mit
+        ctx.letterSpacing = vorher;
+    } else {
+        const zeichen = [...text];
+        const breite = zeichen.reduce((s, c) => s + ctx.measureText(c).width + spacing, 0) - spacing;
+        let x = cx - breite / 2;
+        ctx.textAlign = 'left';
+        zeichen.forEach(c => {
+            ctx.fillText(c, x, y);
+            x += ctx.measureText(c).width + spacing;
+        });
+    }
+    ctx.textAlign = align;
+}
+
+function kuerzen(ctx, text, maxBreite) {
+    if (ctx.measureText(text).width <= maxBreite) return text;
+    let t = text;
+    while (t.length > 1 && ctx.measureText(t + '…').width > maxBreite) t = t.slice(0, -1);
+    return t.replace(/[\s.,-]+$/, '') + '…';
+}
+
+function ladeBild(src) {
+    return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+    });
+}
+
+function zeichneFoto(ctx, img, x, y, w, h) {
+    if (!img) return;
+    const off = document.createElement('canvas');
+    off.width = w;
+    off.height = h;
+    const o = off.getContext('2d');
+    const scale = Math.max(w / img.width, h / img.height);   // Bild füllt die Fläche
+    const bw = img.width * scale;
+    const bh = img.height * scale;
+    o.drawImage(img, (w - bw) / 2, (h - bh) / 2, bw, bh);
+
+    const g = o.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, 'rgba(0,0,0,1)');
+    g.addColorStop(0.18, 'rgba(0,0,0,0)');
+    g.addColorStop(0.82, 'rgba(0,0,0,0)');
+    g.addColorStop(1, 'rgba(0,0,0,1)');
+    o.globalCompositeOperation = 'destination-out';
+    o.fillStyle = g;
+    o.fillRect(0, 0, w, h);
+
+    ctx.drawImage(off, x, y);
+}
+
+function zeichneLogo(ctx, img, cx, cy, d) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, d / 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.clip();
+    if (img) {
+        const scale = Math.max(d / img.width, d / img.height);
+        const bw = img.width * scale;
+        const bh = img.height * scale;
+        ctx.drawImage(img, cx - bw / 2, cy - bh / 2, bw, bh);
+    }
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(cx, cy, d / 2, 0, Math.PI * 2);
+    ctx.lineWidth = d * 0.045;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+}
+
+/* ---------------- Bild aufbauen ---------------- */
+
+/* Story: Karte liegt zwischen y=190 und y=1650, damit Instagram mit
+   Profilzeile oben und Antwort-Leiste unten nichts verdeckt. */
+const FORMATE = {
+    post:  { W: 1080, H: 1080, karte: { x: 0,  y: 0,   w: 1080, h: 1080, r: 0  } },
+    story: { W: 1080, H: 1920, karte: { x: 40, y: 190, w: 1000, h: 1460, r: 44 } }
+};
+
+function zeichneBild(format) {
+    const F = FORMATE[format];
+    canvas.width = F.W;
+    canvas.height = F.H;
+    const ctx = canvas.getContext('2d');
+    const k = F.karte;
+    const s = k.w / 1080;                     // Maßstab der Karte
+
+    // Hintergrund hinter der Karte (nur bei Story sichtbar)
+    const bg = ctx.createLinearGradient(0, 0, 0, F.H);
+    bg.addColorStop(0, '#fcece0');
+    bg.addColorStop(0.5, '#fdfaf0');
+    bg.addColorStop(1, '#fcece0');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, F.W, F.H);
+
+    ctx.save();
+    rundesRechteck(ctx, k.x, k.y, k.w, k.h, k.r);
+    ctx.clip();
+    ctx.translate(k.x, k.y);
+
+    const kopfH = Math.round(408 * s);
+    const bandH = Math.round(62 * s);
+
+    // Grundflächen: weiße Karte, Peach oben, Peach-Band unten
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, k.w, k.h);
+    ctx.fillStyle = '#fcece0';
+    ctx.fillRect(0, 0, k.w, kopfH);
+    ctx.fillRect(0, k.h - bandH, k.w, bandH);
+
+    // Kopfbereich
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#d32f2f';
+    ctx.font = `italic bold ${Math.round(74 * s)}px Georgia, serif`;
+    ctx.fillText('Eis bei Lobbes', k.w / 2, Math.round(120 * s));
+
+    zeichneFoto(ctx, bilder.foto, 0, Math.round(128 * s), k.w, kopfH - Math.round(128 * s));
+    zeichneLogo(ctx, bilder.logo, Math.round(105 * s), Math.round(105 * s), Math.round(130 * s));
+
+    // Überschrift des Terminblocks, mit Kalender-Symbol wie auf der Website
+    const titelGroesse = Math.round(42 * s);
+    const titelText = 'Wo ihr uns findet';
+    const titelY = kopfH + Math.round(54 * s);
+    ctx.fillStyle = '#d32f2f';
+    ctx.font = `${titelGroesse}px Georgia, serif`;
+    if (symbolFontDa) {
+        const iconGroesse = Math.round(titelGroesse * 0.82);
+        const textBreite = ctx.measureText(titelText).width;
+        ctx.font = `900 ${iconGroesse}px "Font Awesome 6 Free"`;
+        const iconBreite = ctx.measureText(KALENDER_ICON).width;
+        const luecke = Math.round(14 * s);
+        const start = (k.w - (iconBreite + luecke + textBreite)) / 2;
+        ctx.textAlign = 'left';
+        ctx.fillText(KALENDER_ICON, start, titelY);
+        ctx.font = `${titelGroesse}px Georgia, serif`;
+        ctx.fillText(titelText, start + iconBreite + luecke, titelY);
+        ctx.textAlign = 'center';
+    } else {
+        ctx.fillText(titelText, k.w / 2, titelY);
+    }
+
+    // Fußband
+    ctx.fillStyle = '#3e2723';
+    ctx.font = `bold ${Math.round(21 * s)}px 'Helvetica Neue', Arial, sans-serif`;
+    zeichneGesperrt(ctx, 'Handgemachtes Eis eigener Herstellung',
+                    k.w / 2, k.h - bandH / 2 + Math.round(8 * s), Math.max(1, 1.2 * s));
+
+    // Terminzeilen
+    const links = Math.round(58 * s);
+    const oben = kopfH + Math.round(84 * s);
+    const unten = k.h - bandH - Math.round(24 * s);
+    const platz = unten - oben;
+
+    if (gruppen.length === 0) {
+        ctx.fillStyle = '#8d6e63';
+        ctx.font = `italic ${Math.round(30 * s)}px 'Helvetica Neue', Arial, sans-serif`;
+        ctx.fillText('Neue Termine folgen in Kürze!', k.w / 2, oben + platz / 2);
+        ctx.restore();
+        return { gezeigt: 0, rest: 0 };
+    }
+
+    const minZeile = 62 * s;
+    const passen = Math.max(1, Math.floor(platz / minZeile));
+    const zuViel = gruppen.length > passen;
+    const anzahl = zuViel ? passen - 1 : gruppen.length;   // eine Zeile für den Hinweis freihalten
+    const sichtbar = gruppen.slice(0, Math.max(1, anzahl));
+    const rest = gruppen.length - sichtbar.length;
+
+    const zeilenGesamt = sichtbar.length + (rest > 0 ? 1 : 0);
+    const zeileH = Math.min(122 * s, platz / zeilenGesamt);
+    const rs = Math.max(0.62, Math.min(1, zeileH / (96 * s)));   // Skalierung innerhalb der Zeile
+
+    const boxW = Math.round(92 * s * (0.72 + 0.28 * rs));
+    const boxH = Math.round(80 * s * rs);
+    const textX = links + boxW + Math.round(24 * s);
+    const textMax = k.w - textX - links;
+
+    // wenige Termine: Block mittig im freien Raum statt oben klebend
+    let y = oben + Math.max(0, (platz - zeileH * zeilenGesamt) / 2);
+    sichtbar.forEach((g, i) => {
+        const mitte = y + zeileH / 2;
+        const df = datumsFeld(g);
+
+        // rotes Datumsfeld
+        ctx.fillStyle = '#d32f2f';
+        rundesRechteck(ctx, links, mitte - boxH / 2, boxW, boxH, Math.round(14 * s * rs));
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        const hatMonat = df.monat !== '';
+        const tagGroesse = Math.round((df.klein ? 25 : 37) * s * rs);
+        ctx.font = `bold ${tagGroesse}px 'Helvetica Neue', Arial, sans-serif`;
+        let tagText = df.tag;
+        if (ctx.measureText(tagText).width > boxW - 10 * s) {
+            ctx.font = `bold ${Math.round(tagGroesse * 0.8)}px 'Helvetica Neue', Arial, sans-serif`;
+        }
+        ctx.fillText(tagText, links + boxW / 2, hatMonat ? mitte + Math.round(4 * s * rs) : mitte + tagGroesse * 0.35);
+
+        if (hatMonat) {
+            ctx.font = `${Math.round(17 * s * rs)}px 'Helvetica Neue', Arial, sans-serif`;
+            zeichneGesperrt(ctx, df.monat.toUpperCase(), links + boxW / 2,
+                            mitte + Math.round(29 * s * rs), 17 * s * rs * 0.1);
+        }
+
+        // Ort + Zusatzinfo
+        ctx.textAlign = 'left';
+        const info = infoZeile(g);
+        const ortGroesse = Math.round(27 * s * rs);
+        const infoGroesse = Math.round(21 * s * rs);
+
+        ctx.fillStyle = '#3e2723';
+        ctx.font = `bold ${ortGroesse}px 'Helvetica Neue', Arial, sans-serif`;
+        const ortY = info ? mitte - Math.round(4 * s * rs) : mitte + ortGroesse * 0.35;
+        ctx.fillText(kuerzen(ctx, g.ort, textMax), textX, ortY);
+
+        if (info) {
+            ctx.fillStyle = '#6d4c41';
+            ctx.font = `${infoGroesse}px 'Helvetica Neue', Arial, sans-serif`;
+            ctx.fillText(kuerzen(ctx, info, textMax), textX, ortY + Math.round(30 * s * rs));
+        }
+
+        // Trennlinie
+        if (i < sichtbar.length - 1) {
+            ctx.strokeStyle = '#f4ece0';
+            ctx.lineWidth = Math.max(1, 2 * s);
+            ctx.beginPath();
+            ctx.moveTo(links, y + zeileH);
+            ctx.lineTo(k.w - links, y + zeileH);
+            ctx.stroke();
+        }
+
+        y += zeileH;
+    });
+
+    if (rest > 0) {
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#8d6e63';
+        ctx.font = `italic ${Math.round(23 * s)}px 'Helvetica Neue', Arial, sans-serif`;
+        ctx.fillText(`… und ${rest} weitere${rest === 1 ? 'r Termin' : ' Termine'} – alle auf eis-bei-lobbes.de`,
+                     k.w / 2, y + zeileH / 2 + Math.round(8 * s));
+    }
+
+    ctx.restore();
+    return { gezeigt: sichtbar.length, rest };
+}
+
+/* ---------------- Text für die Bildunterschrift ---------------- */
+
+function baueCaption() {
+    if (gruppen.length === 0) {
+        return 'Aktuell haben wir keine Termine geplant – neue Termine folgen in Kürze! 🍦\n\n#eisbeilobbes #eisbuddy';
+    }
+    const zeilen = gruppen.map(g => {
+        const einTag = g.von.getTime() === g.bis.getTime();
+        const datum = einTag
+            ? `${g.von.getDate()}. ${MONATE_LANG[g.von.getMonth()]}`
+            : `${g.von.getDate()}.–${g.bis.getDate()}. ${MONATE_LANG[g.bis.getMonth()]}`;
+        const zusatz = infoZeile(g).replace(/\s+·\s+/g, ', ');
+        return `📅 ${datum} – ${g.ort}${zusatz ? ' (' + zusatz + ')' : ''}`;
+    });
+    return [
+        '🍦 Wo ihr unseren Eis Buddy findet:',
+        '',
+        ...zeilen,
+        '',
+        'Handgemachtes Eis eigener Herstellung – wir freuen uns auf euch!',
+        '',
+        '#eisbeilobbes #eisbuddy #handgemachtesEis #Eiszeit #Tangerhütte #mobileEisdiele'
+    ].join('\n');
+}
+
+/* ---------------- Ausgabe / Bedienung ---------------- */
+
+function dateiname() {
+    const h = new Date();
+    const datum = `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`;
+    return `eis-bei-lobbes_termine_${datum}_${aktuellesFormat}.png`;
+}
+
+function aktualisiere() {
+    const ergebnis = zeichneBild(aktuellesFormat);
+    if (gruppen.length === 0) {
+        hinweis.textContent = 'Aktuell sind keine kommenden Termine in termine.csv eingetragen.';
+    } else if (ergebnis.rest > 0) {
+        hinweis.textContent = `${gruppen.length} kommende Termine – auf dem Bild passen ${ergebnis.gezeigt} davon.`;
+    } else {
+        hinweis.textContent = `${gruppen.length} kommende${gruppen.length === 1 ? 'r Termin' : ' Termine'} aus termine.csv.`;
+    }
+}
+
+function holeBlob() {
+    return new Promise((resolve, reject) => {
+        try {
+            canvas.toBlob(b => b ? resolve(b) : reject(new Error('leer')), 'image/png');
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
+document.querySelectorAll('.format-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        aktuellesFormat = btn.dataset.format;
+        document.querySelectorAll('.format-tab').forEach(b => b.classList.toggle('aktiv', b === btn));
+        aktualisiere();
+    });
+});
+
+document.getElementById('btn-bild').addEventListener('click', async () => {
+    try {
+        const blob = await holeBlob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = dateiname();
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        status.textContent = 'Bild gespeichert ✓';
+    } catch (err) {
+        status.textContent = 'Bild konnte nicht erzeugt werden – bitte Screenshot nutzen.';
+    }
+});
+
+document.getElementById('btn-teilen').addEventListener('click', async () => {
+    try {
+        const blob = await holeBlob();
+        const datei = new File([blob], dateiname(), { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [datei] })) {
+            await navigator.share({ files: [datei], text: caption.value });
+            status.textContent = '';
+        } else {
+            status.textContent = 'Teilen wird hier nicht unterstützt – bitte Bild speichern.';
+        }
+    } catch (err) {
+        if (err && err.name !== 'AbortError') status.textContent = 'Teilen abgebrochen.';
+    }
+});
+
+document.getElementById('btn-text').addEventListener('click', async () => {
+    try {
+        await navigator.clipboard.writeText(caption.value);
+    } catch (err) {
+        caption.select();
+        document.execCommand('copy');
+    }
+    status.textContent = 'Text kopiert ✓';
+});
+
+/* ---------------- Start ---------------- */
+
+/* termine.csv ist die Quelle. Per file:// blockiert der Browser fetch(),
+   dann greift die Kopie aus termine.js. */
+function ladeTermine() {
+    return fetch('termine.csv?v=' + Date.now())
+        .then(r => r.ok ? r.text() : Promise.reject(r.status))
+        .catch(() => window.TERMINE_CSV || null)
+        .then(text => text ? parseCSV(text) : null);
+}
+
+/* Icon-Schrift laden, damit das Kalendersymbol auch im Canvas erscheint */
+function ladeSymbolFont() {
+    if (!document.fonts) return Promise.resolve();
+    return document.fonts.load(SYMBOL_FONT, KALENDER_ICON)
+        .then(() => { symbolFontDa = document.fonts.check(SYMBOL_FONT); })
+        .catch(() => { symbolFontDa = false; });
+}
+
+Promise.all([
+    ladeBild('eis-buddy-offen.jpg'),
+    ladeBild('insta-logo-clean.png'),
+    ladeTermine(),
+    ladeSymbolFont()
+]).then(([foto, logo, termine]) => {
+    bilder.foto = foto;
+    bilder.logo = logo;
+
+    if (!termine) {
+        hinweis.textContent = 'termine.csv konnte nicht geladen werden.';
+        zeichneBild(aktuellesFormat);
+        return;
+    }
+
+    const heute = new Date();
+    heute.setHours(0, 0, 0, 0);
+    const kommend = termine
+        .filter(t => t.datum && new Date(t.datum) >= heute)
+        .sort((a, b) => new Date(a.datum) - new Date(b.datum));
+
+    gruppen = fasseZusammen(kommend);
+    caption.value = baueCaption();
+    btnTeilen.hidden = !(navigator.share && navigator.canShare);
+    aktualisiere();
+
+    // Per file:// darf der Browser das Bild nicht aus dem Canvas lesen
+    if (location.protocol === 'file:') {
+        status.textContent = 'Hinweis: Speichern klappt nur online bzw. über einen Webserver.';
+    }
+});
+</script>
+</body>
+</html>
