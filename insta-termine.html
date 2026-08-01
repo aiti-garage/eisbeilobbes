@@ -422,19 +422,31 @@ function zeichneLogo(ctx, img, cx, cy, d) {
 
 /* ---------------- Bild aufbauen ---------------- */
 
-/* Story: Karte liegt zwischen y=190 und y=1650, damit Instagram mit
-   Profilzeile oben und Antwort-Leiste unten nichts verdeckt. */
 const FORMATE = {
-    post:  { W: 1080, H: 1080, karte: { x: 0,  y: 0,   w: 1080, h: 1080, r: 0  } },
-    story: { W: 1080, H: 1920, karte: { x: 40, y: 190, w: 1000, h: 1460, r: 44 } }
+    post:  { W: 1080, H: 1080 },
+    story: { W: 1080, H: 1920 }
 };
+
+/* Beim Beitrag füllt die Karte das ganze Bild. Bei der Story ist sie nur so
+   hoch wie ihr Inhalt und sitzt mittig - sonst bleibt bei ein, zwei Terminen
+   eine große weiße Fläche stehen. Höchstens 1460 hoch und mittig heißt: sie
+   bleibt zwischen y=230 und y=1690, wo Instagram nichts überdeckt. */
+function karteFuer(format, anzahl) {
+    if (format === 'post') return { x: 0, y: 0, w: 1080, h: 1080, r: 0 };
+
+    const w = 1000, s = w / 1080;
+    const kopf = Math.round(128 * s) + (w * 0.88) / seitenverhaeltnis(bilder.foto);
+    const inhalt = kopf + 84 * s + Math.max(1, anzahl) * 110 * s + 46 * s + 62 * s;
+    const h = Math.round(Math.max(820 * s, Math.min(1460, inhalt)));
+    return { x: 40, y: Math.round((1920 - h) / 2), w, h, r: 44 };
+}
 
 function zeichneBild(format) {
     const F = FORMATE[format];
     canvas.width = F.W;
     canvas.height = F.H;
     const ctx = canvas.getContext('2d');
-    const k = F.karte;
+    const k = karteFuer(format, gruppen.length);
     const s = k.w / 1080;                     // Maßstab der Karte
 
     // Hintergrund hinter der Karte (nur bei Story sichtbar)
@@ -622,20 +634,22 @@ function zeichneBild(format) {
 const EINZEL = {
     story: {
         W: 1080, H: 1920,
-        logo: { d: 172, top: 112 }, titel: 92, titelY: 392,
+        logo: { d: 172, x: 540, y: 198 }, titel: 92, titelY: 392,
         kicker: 30, kickerY: 450,
         foto: { top: 480, min: 400, luftDanach: 25 },
         pill: { w: 430, h: 240, r: 40, wtag: 34, tag: 108, monat: 36 },
         ort: 70, besch: 42, zeit: 48, luftMin: 44, abstand: 26,
         fussLinie: 1630, fussY: 1700, fuss: 42, kiY: 1752, ki: 30
     },
+    /* Beim Quadrat sitzt das Logo links neben dem Titel statt darüber -
+       das spart Höhe, die dem Foto zugute kommt (wie in der Übersicht). */
     post: {
         W: 1080, H: 1080,
-        logo: { d: 100, top: 30 }, titel: 64, titelY: 205,
-        kicker: 22, kickerY: 246,
-        foto: { top: 266, min: 200, luftDanach: 22 },
-        pill: { w: 340, h: 162, r: 32, wtag: 26, tag: 74, monat: 27 },
-        ort: 54, besch: 34, zeit: 38, luftMin: 26, abstand: 18,
+        logo: { d: 130, x: 105, y: 105 }, titel: 74, titelY: 122,
+        kicker: 24, kickerY: 168,
+        foto: { top: 188, min: 200, luftDanach: 20 },
+        pill: { w: 336, h: 152, r: 30, wtag: 26, tag: 70, monat: 26 },
+        ort: 54, besch: 34, zeit: 38, luftMin: 24, abstand: 18,
         fussLinie: 958, fussY: 1006, fuss: 32, kiY: 1046, ki: 23
     }
 };
@@ -658,7 +672,7 @@ function zeichneEinzelBild(t, format) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
 
-    zeichneLogo(ctx, bilder.logo, cx, L.logo.top + L.logo.d / 2, L.logo.d);
+    zeichneLogo(ctx, bilder.logo, L.logo.x, L.logo.y, L.logo.d);
 
     ctx.fillStyle = '#d32f2f';
     ctx.font = `italic bold ${L.titel}px Georgia, serif`;
