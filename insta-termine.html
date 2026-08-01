@@ -324,6 +324,11 @@ function kuerzen(ctx, text, maxBreite) {
     return t.replace(/[\s.,-]+$/, '') + '…';
 }
 
+/* Breite/Höhe des Fotos - bestimmt, wie hoch es bei voller Breite wird */
+function seitenverhaeltnis(img) {
+    return img ? img.width / img.height : 2752 / 1536;
+}
+
 function ladeBild(src) {
     return new Promise(resolve => {
         const img = new Image();
@@ -358,13 +363,13 @@ function zeichneFoto(ctx, img, x, y, w, h) {
 
 /* Foto vollständig einpassen, nichts abschneiden, alle vier Kanten weich
    auslaufen lassen, damit es nicht als Rechteck auf dem Hintergrund klebt. */
-function zeichneFotoEinpassen(ctx, img, W, top, hoehe) {
+function zeichneFotoEinpassen(ctx, img, W, top, hoehe, breiteFaktor) {
     if (!img) return;
     const off = document.createElement('canvas');
     off.width = W;
     off.height = hoehe;
     const o = off.getContext('2d');
-    const scale = Math.min((W * 0.86) / img.width, hoehe / img.height);
+    const scale = Math.min((W * (breiteFaktor || 0.86)) / img.width, hoehe / img.height);
     const bw = img.width * scale;
     const bh = img.height * scale;
     const links = (W - bw) / 2;
@@ -445,10 +450,19 @@ function zeichneBild(format) {
     ctx.clip();
     ctx.translate(k.x, k.y);
 
-    // Kopfhöhe so, dass der Eiswagen vollständig ins Bildband passt,
-    // ohne der Terminliste zu viel Platz wegzunehmen
-    const kopfH = Math.round(448 * s);
     const bandH = Math.round(62 * s);
+
+    /* Der Kopfbereich bekommt, was die Terminliste nicht braucht: bei ein,
+       zwei Terminen wird das Foto groß, bei einer vollen Liste schrumpft es
+       bis zur Untergrenze. Mehr als volle Bildbreite bringt nichts. */
+    const fotoOben = Math.round(128 * s);
+    const fotoMax = (k.w * 0.88) / seitenverhaeltnis(bilder.foto);
+    const untenGrenze = k.h - bandH - Math.round(46 * s);
+    const wunschListe = Math.max(1, gruppen.length) * 104 * s;
+    const kopfH = Math.round(Math.min(
+        fotoOben + fotoMax,
+        Math.max(448 * s, untenGrenze - 84 * s - wunschListe)
+    ));
 
     // Grundflächen: weiße Karte, Peach oben, Peach-Band unten
     ctx.fillStyle = '#ffffff';
@@ -463,7 +477,7 @@ function zeichneBild(format) {
     ctx.font = `italic bold ${Math.round(74 * s)}px Georgia, serif`;
     ctx.fillText('Eis bei Lobbes', k.w / 2, Math.round(120 * s));
 
-    zeichneFotoEinpassen(ctx, bilder.foto, k.w, Math.round(128 * s), kopfH - Math.round(128 * s));
+    zeichneFotoEinpassen(ctx, bilder.foto, k.w, fotoOben, kopfH - fotoOben, 0.88);
     zeichneLogo(ctx, bilder.logo, Math.round(105 * s), Math.round(105 * s), Math.round(130 * s));
 
     // Überschrift des Terminblocks, mit Kalender-Symbol wie auf der Website
@@ -608,19 +622,19 @@ function zeichneBild(format) {
 const EINZEL = {
     story: {
         W: 1080, H: 1920,
-        logo: { d: 180, top: 140 }, titel: 92, titelY: 425,
-        kicker: 30, kickerY: 486,
-        foto: { top: 515, h: 470 },
-        pill: { top: 1010, w: 430, h: 240, r: 40, wtag: 34, tag: 108, monat: 36 },
+        logo: { d: 172, top: 112 }, titel: 92, titelY: 392,
+        kicker: 30, kickerY: 450,
+        foto: { top: 480, min: 400, luftDanach: 25 },
+        pill: { w: 430, h: 240, r: 40, wtag: 34, tag: 108, monat: 36 },
         ort: 70, besch: 42, zeit: 48, luftMin: 44, abstand: 26,
         fussLinie: 1630, fussY: 1700, fuss: 42, kiY: 1752, ki: 30
     },
     post: {
         W: 1080, H: 1080,
-        logo: { d: 110, top: 36 }, titel: 68, titelY: 228,
-        kicker: 24, kickerY: 274,
-        foto: { top: 296, h: 225 },
-        pill: { top: 551, w: 340, h: 168, r: 32, wtag: 26, tag: 76, monat: 28 },
+        logo: { d: 100, top: 30 }, titel: 64, titelY: 205,
+        kicker: 22, kickerY: 246,
+        foto: { top: 266, min: 200, luftDanach: 22 },
+        pill: { w: 340, h: 162, r: 32, wtag: 26, tag: 74, monat: 27 },
         ort: 54, besch: 34, zeit: 38, luftMin: 26, abstand: 18,
         fussLinie: 958, fussY: 1006, fuss: 32, kiY: 1046, ki: 23
     }
@@ -654,22 +668,7 @@ function zeichneEinzelBild(t, format) {
     ctx.font = `bold ${L.kicker}px 'Helvetica Neue', Arial, sans-serif`;
     zeichneGesperrt(ctx, 'WIR SIND UNTERWEGS', cx, L.kickerY, L.kicker * 0.22);
 
-    zeichneFotoEinpassen(ctx, bilder.foto, W, L.foto.top, L.foto.h);
-
-    // Datums-Pille
-    const p = L.pill;
-    ctx.fillStyle = '#d32f2f';
-    rundesRechteck(ctx, cx - p.w / 2, p.top, p.w, p.h, p.r);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${p.wtag}px 'Helvetica Neue', Arial, sans-serif`;
-    zeichneGesperrt(ctx, WOCHENTAGE[d.getDay()].toUpperCase(), cx, p.top + p.h * 0.25, p.wtag * 0.18);
-    ctx.font = `bold ${p.tag}px 'Helvetica Neue', Arial, sans-serif`;
-    ctx.fillText(String(d.getDate()), cx, p.top + p.h * 0.68);
-    ctx.font = `${p.monat}px 'Helvetica Neue', Arial, sans-serif`;
-    ctx.fillText(`${MONATE_LANG[d.getMonth()]} ${d.getFullYear()}`, cx, p.top + p.h * 0.90);
-
-    // Ort / Beschreibung / Uhrzeit als Block, mittig im freien Raum
+    // Textblock zuerst vermessen - was er nicht braucht, bekommt das Foto
     const maxB = W * 0.82;
     const bloecke = [];
 
@@ -696,12 +695,35 @@ function zeichneEinzelBild(t, format) {
         groesse: L.zeit, stil: 'bold', farbe: '#5d4037', lh: 1.3
     });
 
-    const platz = L.fussLinie - (p.top + p.h) - L.luftMin;
     const hoehe = bloecke.reduce((s, b) => s + b.zeilen.length * b.groesse * b.lh, 0) +
                   L.abstand * (bloecke.length - 1);
+
+    /* Fotohöhe aus dem Rest: kurzer Ortsname ohne Zusatz -> großes Foto,
+       langer Name mit Beschreibung -> das Foto gibt Platz ab. */
+    const p = L.pill;
+    const fotoMax = (W * 0.92) / seitenverhaeltnis(bilder.foto);
+    const fotoH = Math.max(L.foto.min, Math.min(fotoMax,
+        L.fussLinie - L.foto.top - L.foto.luftDanach - p.h - 2 * L.luftMin - hoehe));
+
+    zeichneFotoEinpassen(ctx, bilder.foto, W, L.foto.top, fotoH, 0.92);
+
+    // Datums-Pille
+    const pillTop = L.foto.top + fotoH + L.foto.luftDanach;
+    ctx.fillStyle = '#d32f2f';
+    rundesRechteck(ctx, cx - p.w / 2, pillTop, p.w, p.h, p.r);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${p.wtag}px 'Helvetica Neue', Arial, sans-serif`;
+    zeichneGesperrt(ctx, WOCHENTAGE[d.getDay()].toUpperCase(), cx, pillTop + p.h * 0.25, p.wtag * 0.18);
+    ctx.font = `bold ${p.tag}px 'Helvetica Neue', Arial, sans-serif`;
+    ctx.fillText(String(d.getDate()), cx, pillTop + p.h * 0.68);
+    ctx.font = `${p.monat}px 'Helvetica Neue', Arial, sans-serif`;
+    ctx.fillText(`${MONATE_LANG[d.getMonth()]} ${d.getFullYear()}`, cx, pillTop + p.h * 0.90);
+
+    const platz = L.fussLinie - (pillTop + p.h) - L.luftMin;
     const eng = Math.min(1, platz / hoehe);   // Notbremse bei sehr viel Text
 
-    let y = p.top + p.h + L.luftMin + (platz - hoehe * eng) / 2;
+    let y = pillTop + p.h + L.luftMin + (platz - hoehe * eng) / 2;
     bloecke.forEach((b, i) => {
         const g = Math.round(b.groesse * eng);
         const zh = g * b.lh;
