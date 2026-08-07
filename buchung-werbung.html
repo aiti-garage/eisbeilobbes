@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Werbung für Buchungen – Eis bei Lobbes</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+    :root {
+        --cream-bg: #fdfaf0;
+        --pastel-peach: #fcece0;
+        --primary-red: #d32f2f;
+        --dark-brown: #3e2723;
+        --white-card: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        background-color: var(--cream-bg);
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        color: var(--dark-brown);
+        padding: 30px 16px 60px 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    .werkzeug {
+        background-color: var(--white-card);
+        border: 1px solid #f0f0f0;
+        border-radius: 25px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+        padding: 26px 24px 24px 24px;
+        max-width: 560px;
+        width: 100%;
+        text-align: center;
+    }
+
+    h1 {
+        font-family: 'Georgia', serif;
+        font-style: italic;
+        color: var(--primary-red);
+        font-size: 1.9rem;
+        margin-bottom: 6px;
+    }
+
+    .hinweis { color: #6d4c41; font-size: 0.9rem; line-height: 1.5; margin-bottom: 18px; }
+
+    .auswahl-zeile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        text-align: left;
+    }
+    .auswahl-zeile span {
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6d4c41;
+        flex-shrink: 0;
+    }
+    .auswahl-zeile select {
+        flex: 1;
+        min-width: 0;
+        padding: 11px 12px;
+        border: 1px solid #f0e6d2;
+        border-radius: 12px;
+        background-color: var(--cream-bg);
+        color: var(--dark-brown);
+        font-family: inherit;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    .format-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+    .format-tab {
+        border: 1px solid #f0e6d2;
+        background-color: var(--cream-bg);
+        color: #6d4c41;
+        border-radius: 50px;
+        padding: 9px 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .format-tab.aktiv { background-color: var(--primary-red); border-color: var(--primary-red); color: #fff; }
+
+    #vorschau {
+        max-width: 100%;
+        max-height: 62vh;
+        width: auto;
+        height: auto;
+        border-radius: 14px;
+        display: block;
+        margin: 0 auto;
+        background-color: var(--pastel-peach);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    .aktionen { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .btn {
+        flex: 1 1 130px;
+        padding: 14px 16px;
+        border: none;
+        border-radius: 50px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: #fff;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+    .btn i { margin-right: 8px; }
+    .btn-red { background-color: var(--primary-red); }
+    .btn-insta { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+    .btn-outline { background-color: var(--cream-bg); color: #6d4c41; border: 1px solid #f0e6d2; }
+
+    .caption {
+        width: 100%;
+        margin-top: 16px;
+        border: 1px solid #f0e6d2;
+        border-radius: 12px;
+        background-color: var(--cream-bg);
+        padding: 12px;
+        font-family: inherit;
+        font-size: 0.85rem;
+        color: #5d4037;
+        line-height: 1.5;
+        resize: vertical;
+        min-height: 150px;
+    }
+
+    .status { font-size: 0.82rem; color: #6d4c41; margin-top: 12px; min-height: 1.2em; }
+    .zurueck { margin-top: 22px; font-size: 0.85rem; text-align: center; }
+    .zurueck a { color: #8d6e63; text-decoration: none; }
+    .zurueck a:hover { color: var(--primary-red); }
+</style>
+</head>
+<body>
+
+    <div class="werkzeug">
+        <h1>Werbung für Buchungen</h1>
+        <p class="hinweis" id="hinweis">Bild für einen Anlass erzeugen – führt auf die Buchungsseite.</p>
+
+        <label class="auswahl-zeile">
+            <span>Anlass</span>
+            <select id="auswahl"></select>
+        </label>
+
+        <div class="format-tabs">
+            <button class="format-tab aktiv" data-format="post">Beitrag 1:1</button>
+            <button class="format-tab" data-format="story">Story 9:16</button>
+        </div>
+
+        <canvas id="vorschau" width="1080" height="1080"></canvas>
+
+        <div class="aktionen">
+            <button class="btn btn-red" id="btn-bild"><i class="fas fa-download"></i>Bild speichern</button>
+            <button class="btn btn-insta" id="btn-teilen" hidden><i class="fas fa-share-alt"></i>Teilen</button>
+            <button class="btn btn-outline" id="btn-text"><i class="far fa-copy"></i>Text</button>
+        </div>
+
+        <textarea class="caption" id="caption" rows="8" spellcheck="false"></textarea>
+        <p class="status" id="status"></p>
+    </div>
+
+    <p class="zurueck">
+        <a href="insta-termine.html"><i class="fas fa-calendar-day"></i> Termin-Bilder</a> &nbsp;·&nbsp;
+        <a href="buchung.html"><i class="fas fa-ice-cream"></i> Buchungsseite</a> &nbsp;·&nbsp;
+        <a href="index.html"><i class="fas fa-arrow-left"></i> Startseite</a>
+    </p>
+    <p class="zurueck">Das Bildmaterial wurde mit künstlicher Intelligenz erzeugt. Der Hinweis steht im Bild und in den Metadaten.</p>
+
+<!-- Kennzeichnung der KI-Bilder -->
+<script src="ki-hinweis.js"></script>
+<!-- gemeinsame Zeichenfunktionen -->
+<script src="bild-helfer.js"></script>
+
+<script>
+const WEBSEITE = 'eis-bei-lobbes.de';
+const TELEFON  = '01522 3088941';
+
+/* Ein Eintrag je Anlass: Überschrift und Unterzeile fürs Bild,
+   Aufhänger und eigene Schlagwörter für die Bildunterschrift. */
+const ANLAESSE = [
+    {
+        id: 'allgemein', name: 'Allgemein',
+        schlagzeile: 'Eis für eure Feier',
+        unterzeile: 'Handgemachtes Eis, frisch bei euch vor Ort',
+        aufhaenger: 'Unser Eis Buddy kommt zu euch!',
+        tags: ['#mobileEisdiele', '#Eiswagen']
+    },
+    {
+        id: 'hochzeit', name: 'Hochzeit',
+        schlagzeile: 'Für eure Hochzeit',
+        unterzeile: 'Die süße Überraschung für eure Gäste',
+        aufhaenger: 'Ihr heiratet? Wir bringen das Eis mit!',
+        tags: ['#Hochzeit', '#Hochzeitsidee', '#Hochzeitsfeier']
+    },
+    {
+        id: 'geburtstag', name: 'Geburtstag & Familienfeier',
+        schlagzeile: 'Für euren Geburtstag',
+        unterzeile: 'Eis für alle – ganz ohne Aufwand',
+        aufhaenger: 'Geburtstag, Taufe oder Familienfeier?',
+        tags: ['#Geburtstag', '#Familienfeier', '#Kindergeburtstag']
+    },
+    {
+        id: 'firma', name: 'Firmenfeier & Betriebsfest',
+        schlagzeile: 'Für euer Firmenfest',
+        unterzeile: 'Die Erfrischung für euer Team',
+        aufhaenger: 'Betriebsfest, Jubiläum oder Tag der offenen Tür?',
+        tags: ['#Firmenfeier', '#Betriebsfest', '#Mitarbeiterevent']
+    },
+    {
+        id: 'verein', name: 'Verein & Dorffest',
+        schlagzeile: 'Für euer Vereinsfest',
+        unterzeile: 'Eis für Groß und Klein',
+        aufhaenger: 'Vereinsfest, Dorffest oder Sportturnier?',
+        tags: ['#Dorffest', '#Vereinsfest', '#Sommerfest']
+    },
+    {
+        id: 'kita', name: 'Kita & Schule',
+        schlagzeile: 'Für Kita und Schule',
+        unterzeile: 'Ein Höhepunkt für die Kinder',
+        aufhaenger: 'Schulfest, Zuckertüte oder Projektwoche?',
+        tags: ['#Schulfest', '#Kita', '#Kinderfest']
+    },
+    {
+        id: 'senioren', name: 'Seniorenheim',
+        schlagzeile: 'Für euer Seniorenheim',
+        unterzeile: 'Ein besonderer Nachmittag',
+        aufhaenger: 'Ein Eisnachmittag für eure Bewohner?',
+        tags: ['#Seniorenheim', '#Eisnachmittag']
+    }
+];
+
+const canvas  = document.getElementById('vorschau');
+const hinweis = document.getElementById('hinweis');
+const caption = document.getElementById('caption');
+const status  = document.getElementById('status');
+const auswahl = document.getElementById('auswahl');
+const btnTeilen = document.getElementById('btn-teilen');
+
+let aktuellesFormat = 'post';
+const bilder = { foto: null, logo: null };
+
+/* ---------------- Bildaufbau ---------------- */
+
+/* Story: alles zwischen y≈140 und y≈1670, damit Instagram mit Profilzeile
+   oben und Antwort-Leiste unten nichts verdeckt. */
+const LAYOUT = {
+    story: {
+        W: 1080, H: 1920,
+        logo: { d: 172, x: 540, y: 198 }, titel: 92, titelY: 392,
+        kicker: 30, kickerY: 450,
+        foto: { top: 480, min: 400, luftDanach: 30 },
+        schlagzeile: 76, unterzeile: 42, abstand: 22,
+        pille: { w: 470, h: 128, r: 64, schrift: 38 },
+        luftMin: 40,
+        fussLinie: 1630, fussY: 1700, fuss: 40, kiY: 1752, ki: 30
+    },
+    post: {
+        W: 1080, H: 1080,
+        logo: { d: 130, x: 105, y: 105 }, titel: 74, titelY: 122,
+        kicker: 24, kickerY: 168,
+        foto: { top: 188, min: 200, luftDanach: 22 },
+        schlagzeile: 56, unterzeile: 32, abstand: 16,
+        pille: { w: 380, h: 98, r: 49, schrift: 30 },
+        luftMin: 24,
+        fussLinie: 958, fussY: 1006, fuss: 32, kiY: 1046, ki: 23
+    }
+};
+
+function zeichneBild(anlass, format) {
+    const L = LAYOUT[format];
+    const W = L.W, H = L.H, cx = W / 2;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#fcece0');
+    bg.addColorStop(0.55, '#fdfaf0');
+    bg.addColorStop(1, '#fcece0');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+
+    zeichneLogo(ctx, bilder.logo, L.logo.x, L.logo.y, L.logo.d);
+
+    ctx.fillStyle = '#d32f2f';
+    ctx.font = `italic bold ${L.titel}px Georgia, serif`;
+    ctx.fillText('Eis bei Lobbes', cx, L.titelY);
+
+    ctx.fillStyle = '#6d4c41';
+    ctx.font = `bold ${L.kicker}px 'Helvetica Neue', Arial, sans-serif`;
+    zeichneGesperrt(ctx, 'EIS BUDDY MIETEN', cx, L.kickerY, L.kicker * 0.22);
+
+    // Textblock zuerst vermessen - was er nicht braucht, bekommt das Foto
+    const maxB = W * 0.82;
+    const bloecke = [];
+
+    let zeilenGroesse = L.schlagzeile, zeilen = [];
+    for (const f of [1, 0.86, 0.74]) {
+        zeilenGroesse = Math.round(L.schlagzeile * f);
+        ctx.font = `bold ${zeilenGroesse}px 'Helvetica Neue', Arial, sans-serif`;
+        zeilen = umbrechen(ctx, anlass.schlagzeile, maxB);
+        if (zeilen.length <= 2) break;
+    }
+    bloecke.push({ zeilen, groesse: zeilenGroesse, stil: 'bold', farbe: '#3e2723', lh: 1.24 });
+
+    ctx.font = `italic ${L.unterzeile}px 'Helvetica Neue', Arial, sans-serif`;
+    bloecke.push({
+        zeilen: umbrechen(ctx, anlass.unterzeile, maxB),
+        groesse: L.unterzeile, stil: 'italic', farbe: '#6d4c41', lh: 1.32
+    });
+
+    const textHoehe = bloecke.reduce((s, b) => s + b.zeilen.length * b.groesse * b.lh, 0) +
+                      L.abstand * (bloecke.length - 1);
+
+    const pille = L.pille;
+    const fotoMax = (W * 0.92) / seitenverhaeltnis(bilder.foto);
+    const fotoH = Math.max(L.foto.min, Math.min(fotoMax,
+        L.fussLinie - L.foto.top - L.foto.luftDanach - textHoehe - 2 * L.luftMin - pille.h));
+
+    zeichneFotoEinpassen(ctx, bilder.foto, W, L.foto.top, fotoH, 0.92);
+
+    // Überschrift und Unterzeile
+    let y = L.foto.top + fotoH + L.foto.luftDanach;
+    bloecke.forEach((b, i) => {
+        const zh = b.groesse * b.lh;
+        ctx.font = `${b.stil} ${b.groesse}px 'Helvetica Neue', Arial, sans-serif`;
+        ctx.fillStyle = b.farbe;
+        b.zeilen.forEach(z => {
+            ctx.fillText(z, cx, y + zh * 0.76);
+            y += zh;
+        });
+        if (i < bloecke.length - 1) y += L.abstand;
+    });
+
+    // Aufforderung als rote Pille, mittig im Rest bis zur Fußlinie
+    const pilleOben = y + L.luftMin +
+        Math.max(0, (L.fussLinie - y - L.luftMin - pille.h - L.luftMin) / 2);
+    ctx.fillStyle = '#d32f2f';
+    rundesRechteck(ctx, cx - pille.w / 2, pilleOben, pille.w, pille.h, pille.r);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${pille.schrift}px 'Helvetica Neue', Arial, sans-serif`;
+    zeichneGesperrt(ctx, 'JETZT ANFRAGEN', cx, pilleOben + pille.h * 0.63, pille.schrift * 0.12);
+
+    // Fußzeile
+    ctx.strokeStyle = '#f0e6d2';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.18, L.fussLinie);
+    ctx.lineTo(W * 0.82, L.fussLinie);
+    ctx.stroke();
+
+    ctx.fillStyle = '#8d6e63';
+    ctx.font = `bold ${L.fuss}px 'Helvetica Neue', Arial, sans-serif`;
+    ctx.fillText(`${WEBSEITE}  ·  ${TELEFON}`, cx, L.fussY);
+
+    // Pflichtangabe zum KI-Bild (EU-KI-Verordnung ab 02.08.2026)
+    ctx.fillStyle = '#a1887f';
+    ctx.font = `${L.ki}px 'Helvetica Neue', Arial, sans-serif`;
+    ctx.fillText(KI_HINWEIS, cx, L.kiY);
+}
+
+/* ---------------- Text für die Bildunterschrift ---------------- */
+
+function baueCaption(anlass) {
+    const tags = ['#eisbeilobbes', '#eisbuddy', '#handgemachtesEis', '#Tangerhütte']
+        .concat(anlass.tags);
+    return [
+        '🍦 ' + anlass.aufhaenger,
+        '',
+        'Wir kommen mit dem Eis Buddy zu euch und schöpfen handgemachtes Eis '
+            + 'aus eigener Herstellung frisch vor Ort – ihr feiert, wir kümmern uns ums Eis.',
+        '',
+        '📍 Anfragen unter ' + WEBSEITE,
+        '📞 ' + TELEFON,
+        '',
+        'Preis auf Anfrage – je nach Anfahrt, Dauer und Gästezahl.',
+        '',
+        KI_HINWEIS + '.',
+        '',
+        tags.join(' ')
+    ].join('\n');
+}
+
+/* ---------------- Bedienung ---------------- */
+
+function gewaehlterAnlass() {
+    return ANLAESSE.find(a => a.id === auswahl.value) || ANLAESSE[0];
+}
+
+function dateiname() {
+    return `eis-bei-lobbes_buchung_${gewaehlterAnlass().id}_${aktuellesFormat}.png`;
+}
+
+function aktualisiere() {
+    const anlass = gewaehlterAnlass();
+    zeichneBild(anlass, aktuellesFormat);
+    caption.value = baueCaption(anlass);
+    hinweis.textContent = 'Werbebild für „' + anlass.name + '“ – Text unten ist bearbeitbar.';
+}
+
+function holeBlob() {
+    return pngMitKennzeichnung(canvas);   // aus ki-hinweis.js
+}
+
+auswahl.addEventListener('change', () => {
+    status.textContent = '';
+    aktualisiere();
+});
+
+document.querySelectorAll('.format-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        aktuellesFormat = btn.dataset.format;
+        document.querySelectorAll('.format-tab').forEach(b => b.classList.toggle('aktiv', b === btn));
+        aktualisiere();
+    });
+});
+
+document.getElementById('btn-bild').addEventListener('click', async () => {
+    try {
+        const blob = await holeBlob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = dateiname();
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        status.textContent = 'Bild gespeichert ✓';
+    } catch (err) {
+        status.textContent = 'Bild konnte nicht erzeugt werden – bitte Screenshot nutzen.';
+    }
+});
+
+document.getElementById('btn-teilen').addEventListener('click', async () => {
+    try {
+        const blob = await holeBlob();
+        const datei = new File([blob], dateiname(), { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [datei] })) {
+            await navigator.share({ files: [datei], text: caption.value });
+            status.textContent = '';
+        } else {
+            status.textContent = 'Teilen wird hier nicht unterstützt – bitte Bild speichern.';
+        }
+    } catch (err) {
+        if (err && err.name !== 'AbortError') status.textContent = 'Teilen abgebrochen.';
+    }
+});
+
+document.getElementById('btn-text').addEventListener('click', async () => {
+    try {
+        await navigator.clipboard.writeText(caption.value);
+    } catch (err) {
+        caption.select();
+        document.execCommand('copy');
+    }
+    status.textContent = 'Text kopiert ✓';
+});
+
+/* ---------------- Start ---------------- */
+
+ANLAESSE.forEach(a => {
+    const o = document.createElement('option');
+    o.value = a.id;
+    o.textContent = a.name;
+    auswahl.appendChild(o);
+});
+
+Promise.all([
+    ladeBild('eis-buddy-offen.jpg'),
+    ladeBild('insta-logo-clean.png')
+]).then(([foto, logo]) => {
+    bilder.foto = foto;
+    bilder.logo = logo;
+    btnTeilen.hidden = !(navigator.share && navigator.canShare);
+    aktualisiere();
+
+    // Per file:// darf der Browser das Bild nicht aus dem Canvas lesen
+    if (location.protocol === 'file:') {
+        status.textContent = 'Hinweis: Speichern klappt nur online bzw. über einen Webserver.';
+    }
+});
+</script>
+</body>
+</html>
