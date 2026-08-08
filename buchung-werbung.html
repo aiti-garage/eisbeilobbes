@@ -185,15 +185,16 @@
 <script>
 const WEBSEITE = 'eis-bei-lobbes.de';
 const TELEFON  = '01522 3088941';
+const EMAIL    = 'eisundkaffee@mail.de';
 
 /* Ein Eintrag je Anlass: Überschrift und Unterzeile fürs Bild,
    Aufhänger und eigene Schlagwörter für die Bildunterschrift. */
 const ANLAESSE = [
     {
-        id: 'allgemein', name: 'Allgemein',
-        schlagzeile: 'Eis für eure Feier',
-        unterzeile: 'Handgemachtes Eis, frisch bei euch vor Ort',
-        aufhaenger: 'Unser Eis Buddy kommt zu euch!',
+        id: 'allgemein', name: 'Allgemein (alle Anlässe)',
+        schlagzeile: 'Eis für jeden Anlass',
+        unterzeile: 'Für Feste, Vereinsfeiern & viele weitere Anlässe',
+        aufhaenger: 'Ob Fest, Vereinsfeier oder privater Anlass – unser Eis Buddy kommt zu euch!',
         tags: ['#mobileEisdiele', '#Eiswagen']
     },
     {
@@ -225,11 +226,32 @@ const ANLAESSE = [
         tags: ['#Dorffest', '#Vereinsfest', '#Sommerfest']
     },
     {
+        id: 'stadtfest', name: 'Stadt- & Straßenfest',
+        schlagzeile: 'Für euer Stadtfest',
+        unterzeile: 'Die Erfrischung für alle Besucher',
+        aufhaenger: 'Stadtfest, Straßenfest oder Markttag? Ladet den Eis Buddy ein!',
+        tags: ['#Stadtfest', '#Straßenfest', '#Altmark']
+    },
+    {
+        id: 'sommerfest', name: 'Sommerfest & Gartenparty',
+        schlagzeile: 'Für euer Sommerfest',
+        unterzeile: 'Kühles Eis an warmen Tagen',
+        aufhaenger: 'Sommerfest, Gartenparty oder Grillabend?',
+        tags: ['#Sommerfest', '#Gartenparty', '#Sommer']
+    },
+    {
         id: 'kita', name: 'Kita & Schule',
         schlagzeile: 'Für Kita und Schule',
         unterzeile: 'Ein Höhepunkt für die Kinder',
         aufhaenger: 'Schulfest, Zuckertüte oder Projektwoche?',
         tags: ['#Schulfest', '#Kita', '#Kinderfest']
+    },
+    {
+        id: 'jugendweihe', name: 'Jugendweihe & Konfirmation',
+        schlagzeile: 'Zur Jugendweihe',
+        unterzeile: 'Die süße Überraschung für den großen Tag',
+        aufhaenger: 'Jugendweihe, Konfirmation oder Kommunion?',
+        tags: ['#Jugendweihe', '#Konfirmation', '#Familienfeier']
     },
     {
         id: 'senioren', name: 'Seniorenheim',
@@ -263,7 +285,7 @@ const LAYOUT = {
         schlagzeile: 76, unterzeile: 42, abstand: 22,
         pille: { w: 470, h: 128, r: 64, schrift: 38 },
         luftMin: 40,
-        fussLinie: 1630, fussY: 1700, fuss: 40, kiY: 1752, ki: 30
+        fussLinie: 1630, fussY: 1684, fuss: 40, emailY: 1724, email: 36, kiY: 1764, ki: 30
     },
     post: {
         W: 1080, H: 1080,
@@ -273,7 +295,7 @@ const LAYOUT = {
         schlagzeile: 56, unterzeile: 32, abstand: 16,
         pille: { w: 380, h: 98, r: 49, schrift: 30 },
         luftMin: 24,
-        fussLinie: 958, fussY: 1006, fuss: 32, kiY: 1046, ki: 23
+        fussLinie: 958, fussY: 998, fuss: 32, emailY: 1030, email: 27, kiY: 1060, ki: 23
     }
 };
 
@@ -368,6 +390,9 @@ function zeichneBild(anlass, format) {
     ctx.font = `bold ${L.fuss}px 'Helvetica Neue', Arial, sans-serif`;
     ctx.fillText(`${WEBSEITE}  ·  ${TELEFON}`, cx, L.fussY);
 
+    ctx.font = `${L.email}px 'Helvetica Neue', Arial, sans-serif`;
+    ctx.fillText(EMAIL, cx, L.emailY);
+
     // Pflichtangabe zum KI-Bild (EU-KI-Verordnung ab 02.08.2026)
     ctx.fillStyle = '#a1887f';
     ctx.font = `${L.ki}px 'Helvetica Neue', Arial, sans-serif`;
@@ -387,6 +412,7 @@ function baueCaption(anlass) {
         '',
         '📍 Anfragen unter ' + WEBSEITE,
         '📞 ' + TELEFON,
+        '✉️ ' + EMAIL,
         '',
         'Preis auf Anfrage – je nach Anfahrt, Dauer und Gästezahl.',
         '',
